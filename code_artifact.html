@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="th" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบแจ้งซ่อมอุปกรณ์ (RepairDesk Pro)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Prompt for Thai typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Prompt', 'Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Prompt', 'Inter', sans-serif;
+        }
+        /* Custom scrollbar for sleek look */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 h-full flex flex-col antialiased">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-indigo-600 text-white shadow-md z-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/10 p-2 rounded-xl backdrop-blur-sm">
+                    <i class="fa-solid fa-screwdriver-wrench text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight tracking-wide">RepairDesk Pro</h1>
+                    <p class="text-xs text-indigo-200">ระบบแจ้งซ่อมและติดตามสถานะอุปกรณ์</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="openNewTicketModal()" class="bg-white text-indigo-600 hover:bg-indigo-50 font-medium px-4 py-2 rounded-xl text-sm transition shadow-sm flex items-center space-x-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>แจ้งซ่อมใหม่</span>
+                </button>
+                <div class="hidden sm:flex items-center space-x-2 pl-3 border-l border-indigo-500">
+                    <div class="w-9 h-9 rounded-full bg-indigo-500 flex items-center justify-center font-bold text-sm text-white border-2 border-indigo-400">
+                        ผอ
+                    </div>
+                    <div class="text-xs text-left">
+                        <p class="font-semibold">ผู้ดูแลระบบ</p>
+                        <p class="text-indigo-200 text-[10px]">Admin IT</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="flex-1 flex overflow-hidden">
+        <!-- Sidebar Navigation -->
+        <aside class="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col z-10">
+            <div class="p-4 space-y-1">
+                <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2">เมนูหลัก</p>
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-indigo-600 bg-indigo-50">
+                    <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+                    <span>ภาพรวมระบบ (Dashboard)</span>
+                </button>
+                <button onclick="switchTab('tickets')" id="nav-tickets" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+                    <i class="fa-solid fa-clipboard-list w-5 text-center"></i>
+                    <span>รายการแจ้งซ่อมทั้งหมด</span>
+                </button>
+                <button onclick="switchTab('equipment')" id="nav-equipment" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+                    <i class="fa-solid fa-desktop w-5 text-center"></i>
+                    <span>คลังอุปกรณ์/หมวดหมู่</span>
+                </button>
+                <button onclick="switchTab('technicians')" id="nav-technicians" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+                    <i class="fa-solid fa-user-gear w-5 text-center"></i>
+                    <span>ทีมช่างซ่อมบำรุง</span>
+                </button>
+            </div>
+            <div class="mt-auto p-4 border-t border-slate-100">
+                <div class="bg-indigo-50/60 rounded-2xl p-3 border border-indigo-100 text-xs text-slate-600">
+                    <p class="font-semibold text-indigo-900 mb-1"><i class="fa-solid fa-circle-info mr-1 text-indigo-600"></i> ช่วยเหลือเร่งด่วน</p>
+                    <p class="text-slate-500 mb-2">โทรสายด่วนภายใน: <strong>1122</strong> หรือติดต่อทีม IT Support ชั้น 3</p>
+                    <button onclick="showToast('ติดต่อทีม IT Support สำเร็จ', 'success')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-1.5 rounded-xl font-medium transition text-center shadow-sm">แจ้งปัญหาด่วน</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto bg-slate-50/50 p-4 sm:p-6 lg:p-8">
+
+            <!-- Mobile Navigation Tab Bar -->
+            <div class="md:hidden flex space-x-1 mb-6 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
+                <button onclick="switchTab('dashboard')" id="mob-nav-dashboard" class="flex-1 min-w-[100px] py-2 px-3 text-xs font-medium rounded-xl text-center transition bg-indigo-600 text-white">ภาพรวม</button>
+                <button onclick="switchTab('tickets')" id="mob-nav-tickets" class="flex-1 min-w-[100px] py-2 px-3 text-xs font-medium rounded-xl text-center transition text-slate-600 hover:bg-slate-100">รายการ</button>
+                <button onclick="switchTab('equipment')" id="mob-nav-equipment" class="flex-1 min-w-[100px] py-2 px-3 text-xs font-medium rounded-xl text-center transition text-slate-600 hover:bg-slate-100">อุปกรณ์</button>
+                <button onclick="switchTab('technicians')" id="mob-nav-technicians" class="flex-1 min-w-[100px] py-2 px-3 text-xs font-medium rounded-xl text-center transition text-slate-600 hover:bg-slate-100">ทีมช่าง</button>
+            </div>
+
+            <!-- TAB 1: DASHBOARD -->
+            <div id="tab-dashboard" class="space-y-6">
+                <!-- Welcome Banner -->
+                <div class="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-3xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center">
+                    <div class="absolute right-0 top-0 bottom-0 w-1/3 bg-white/5 skew-x-12 pointer-events-none"></div>
+                    <div class="space-y-2 z-10 mb-4 md:mb-0">
+                        <span class="bg-white/20 text-xs px-3 py-1 rounded-full font-medium tracking-wide">ระบบจัดการแจ้งซ่อมออนไลน์</span>
+                        <h2 class="text-2xl sm:text-3xl font-bold">ยินดีต้อนรับสู่ระบบแจ้งซ่อมอุปกรณ์</h2>
+                        <p class="text-indigo-100 text-sm max-w-xl">ติดตามสถานะ แจ้งปัญหาฮาร์ดแวร์ อุปกรณ์สำนักงาน แอร์ โปรเจคเตอร์ และระบบเครือข่ายได้อย่างรวดเร็วและมีประสิทธิภาพ</p>
+                    </div>
+                    <div class="z-10 flex space-x-3">
+                        <button onclick="openNewTicketModal()" class="bg-white text-indigo-600 hover:bg-indigo-50 font-semibold px-5 py-3 rounded-2xl text-sm transition shadow-md flex items-center space-x-2">
+                            <i class="fa-solid fa-plus-circle text-lg"></i>
+                            <span>แจ้งซ่อมอุปกรณ์</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 mb-1">รายการทั้งหมด</p>
+                            <h3 id="stat-total" class="text-2xl sm:text-3xl font-bold text-slate-800">0</h3>
+                            <p class="text-[11px] text-indigo-600 mt-1"><i class="fa-solid fa-arrow-trend-up"></i> อัปเดตเรียลไทม์</p>
+                        </div>
+                        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-xl shadow-inner">
+                            <i class="fa-solid fa-clipboard-list"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 mb-1">รอดำเนินการ</p>
+                            <h3 id="stat-pending" class="text-2xl sm:text-3xl font-bold text-amber-600">0</h3>
+                            <p class="text-[11px] text-amber-600 mt-1"><i class="fa-solid fa-clock"></i> รอรับเรื่อง</p>
+                        </div>
+                        <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-xl shadow-inner">
+                            <i class="fa-solid fa-hourglass-start"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 mb-1">กำลังดำเนินการ</p>
+                            <h3 id="stat-progress" class="text-2xl sm:text-3xl font-bold text-blue-600">0</h3>
+                            <p class="text-[11px] text-blue-600 mt-1"><i class="fa-solid fa-wrench"></i> ช่างกำลังซ่อม</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl shadow-inner">
+                            <i class="fa-solid fa-screwdriver-wrench"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 mb-1">ซ่อมเสร็จสิ้น</p>
+                            <h3 id="stat-resolved" class="text-2xl sm:text-3xl font-bold text-emerald-600">0</h3>
+                            <p class="text-[11px] text-emerald-600 mt-1"><i class="fa-solid fa-check-circle"></i> ปิดงานแล้ว</p>
+                        </div>
+                        <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-xl shadow-inner">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Tickets & Category Breakdown -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Recent Tickets Table -->
+                    <div class="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i>
+                                <h3 class="font-bold text-slate-800">รายการแจ้งซ่อมล่าสุด</h3>
+                            </div>
+                            <button onclick="switchTab('tickets')" class="text-xs text-indigo-600 hover:text-indigo-700 font-semibold flex items-center space-x-1">
+                                <span>ดูทั้งหมด</span>
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto flex-1">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-400 uppercase text-[10px] font-semibold tracking-wider border-b border-slate-100">
+                                        <th class="py-3 px-4">รหัส / อุปกรณ์</th>
+                                        <th class="py-3 px-4">หมวดหมู่</th>
+                                        <th class="py-3 px-4">ความเร่งด่วน</th>
+                                        <th class="py-3 px-4">สถานะ</th>
+                                        <th class="py-3 px-4 text-right">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-tickets-tbody" class="divide-y divide-slate-100 text-slate-600">
+                                    <!-- Rendered dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Quick Summary & Category Status -->
+                    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 space-y-5 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center space-x-2 mb-4">
+                                <i class="fa-solid fa-chart-bar text-indigo-600"></i>
+                                <h3 class="font-bold text-slate-800">สถิติแยกตามหมวดหมู่</h3>
+                            </div>
+                            <div class="space-y-3" id="category-stats-container">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 text-xs space-y-2">
+                            <p class="font-semibold text-slate-700 flex items-center"><i class="fa-solid fa-lightbulb text-amber-500 mr-2"></i> เคล็ดลับการแจ้งซ่อม</p>
+                            <p class="text-slate-500">ระบุอาการเสียและหมายเลขครุภัณฑ์ (ถ้ามี) ให้ชัดเจน จะช่วยให้ทีมช่างเข้าตรวจสอบและแก้ไขปัญหาได้รวดเร็วขึ้นถึง 50%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: TICKETS LIST -->
+            <div id="tab-tickets" class="space-y-6 hidden">
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-6 space-y-5">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800">รายการแจ้งซ่อมทั้งหมด</h2>
+                            <p class="text-xs text-slate-500">จัดการ ค้นหา และอัปเดตสถานะการแจ้งซ่อมอุปกรณ์ในระบบ</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                            <div class="relative flex-1 md:w-64">
+                                <i class="fa-solid fa-search absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+                                <input type="text" id="search-input" oninput="filterTickets()" placeholder="ค้นหาอุปกรณ์, ผู้แจ้ง, อาการ..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-600 transition">
+                            </div>
+                            <select id="status-filter" onchange="filterTickets()" class="py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-600 transition">
+                                <option value="ALL">สถานะทั้งหมด</option>
+                                <option value="รอดำเนินการ">รอดำเนินการ</option>
+                                <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
+                                <option value="ซ่อมเสร็จสิ้น">ซ่อมเสร็จสิ้น</option>
+                                <option value="ยกเลิก">ยกเลิก</option>
+                            </select>
+                            <button onclick="openNewTicketModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-xl text-sm transition shadow-sm flex items-center space-x-2">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>แจ้งซ่อม</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tickets Table -->
+                    <div class="overflow-x-auto border border-slate-100 rounded-2xl">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-400 uppercase text-[10px] font-semibold tracking-wider border-b border-slate-200">
+                                    <th class="py-3 px-4">รหัส / วันที่</th>
+                                    <th class="py-3 px-4">ชื่ออุปกรณ์ / หมวดหมู่</th>
+                                    <th class="py-3 px-4">อาการเสีย</th>
+                                    <th class="py-3 px-4">ผู้แจ้ง / สถานที่</th>
+                                    <th class="py-3 px-4">ความเร่งด่วน</th>
+                                    <th class="py-3 px-4">สถานะ</th>
+                                    <th class="py-3 px-4 text-right">การจัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="all-tickets-tbody" class="divide-y divide-slate-100 text-slate-600">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: EQUIPMENT INVENTORY & CATEGORIES -->
+            <div id="tab-equipment" class="space-y-6 hidden">
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-6 space-y-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800">หมวดหมู่อุปกรณ์และครุภัณฑ์</h2>
+                            <p class="text-xs text-slate-500">จัดการประเภทอุปกรณ์ที่สามารถแจ้งซ่อมได้ในระบบ</p>
+                        </div>
+                        <button onclick="showToast('ฟีเจอร์เพิ่มหมวดหมู่อุปกรณ์ใหม่จะเปิดใช้งานเร็วๆ นี้', 'info')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-xl text-sm transition shadow-sm flex items-center space-x-2">
+                            <i class="fa-solid fa-folder-plus"></i>
+                            <span>เพิ่มหมวดหมู่ใหม่</span>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="categories-grid">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: TECHNICIANS -->
+            <div id="tab-technicians" class="space-y-6 hidden">
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-6 space-y-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800">ทีมช่างและผู้เชี่ยวชาญซ่อมบำรุง</h2>
+                            <p class="text-xs text-slate-500">รายชื่อเจ้าหน้าที่ผู้รับผิดชอบงานซ่อมอุปกรณ์แต่ละประเภท</p>
+                        </div>
+                        <button onclick="showToast('ฟีเจอร์เพิ่มรายชื่อช่างจะเปิดใช้งานเร็วๆ นี้', 'info')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-xl text-sm transition shadow-sm flex items-center space-x-2">
+                            <i class="fa-solid fa-user-plus"></i>
+                            <span>เพิ่มช่างผู้รับผิดชอบ</span>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="technicians-grid">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODAL: NEW TICKET -->
+    <div id="new-ticket-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-file-circle-plus"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg text-slate-800">แจ้งซ่อมอุปกรณ์ใหม่</h3>
+                        <p class="text-xs text-slate-500">กรอกรายละเอียดปัญหาอุปกรณ์ที่ต้องการความช่วยเหลือ</p>
+                    </div>
+                </div>
+                <button onclick="closeNewTicketModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="new-ticket-form" onsubmit="handleCreateTicket(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">ชื่ออุปกรณ์ / รหัสครุภัณฑ์ <span class="text-rose-500">*</span></label>
+                    <input type="text" id="ticket-item" required placeholder="เช่น โน้ตบุ๊ก Dell (IT-049) หรือ แอร์ห้องประชุม 2" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-600 transition">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">หมวดหมู่อุปกรณ์ <span class="text-rose-500">*</span></label>
+                        <select id="ticket-category" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-600 transition">
+                            <option value="คอมพิวเตอร์และไอที">คอมพิวเตอร์และไอที</option>
+                            <option value="เครื่องปรับอากาศ">เครื่องปรับอากาศ</option>
+                            <option value="อุปกรณ์สำนักงาน">อุปกรณ์สำนักงาน</option>
+                            <option value="ระบบไฟฟ้า/แสงสว่าง">ระบบไฟฟ้า/แสงสว่าง</option>
+                            <option value="เครือข่าย/อินเทอร์เน็ต">เครือข่าย/อินเทอร์เน็ต</option>
+                            <option value="อื่นๆ">อื่นๆ</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">ระดับความเร่งด่วน</label>
+                        <select id="ticket-priority" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-600 transition">
+                            <option value="ปกติ">ปกติ (Normal)</option>
+                            <option value="ปานกลาง">ปานกลาง (Medium)</option>
+                            <option value="ด่วน">ด่วน (Urgent)</option>
+                            <option value="ด่วนที่สุด">ด่วนที่สุด (Critical)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">ชื่อผู้แจ้ง <span class="text-rose-500">*</span></label>
+                        <input type="text" id="ticket-reporter" required placeholder="เช่น สมชาย ใจดี" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-600 transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">สถานที่ / ห้อง <span class="text-rose-500">*</span></label>
+                        <input type="text" id="ticket-location" required placeholder="เช่น ห้องประชุมใหญ่ ชั้น 2" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-600 transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">รายละเอียดอาการเสีย <span class="text-rose-500">*</span></label>
+                    <textarea id="ticket-description" required rows="3" placeholder="ระบุอาการผิดปกติ เสียงดัง เปิดไม่ติด หรือปัญหาที่พบ..." class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-600 transition resize-none"></textarea>
+                </div>
+
+                <div class="pt-3 flex space-x-3">
+                    <button type="button" onclick="closeNewTicketModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2.5 rounded-xl text-sm transition">ยกเลิก</button>
+                    <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-xl text-sm transition shadow-sm">บันทึกแจ้งซ่อม</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: TICKET DETAIL & ACTION -->
+    <div id="detail-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-100 space-y-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div class="flex items-center space-x-3">
+                    <div id="modal-detail-icon" class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg font-bold">
+                        #
+                    </div>
+                    <div>
+                        <h3 id="modal-detail-title" class="font-bold text-lg text-slate-800">รายละเอียดใบแจ้งซ่อม</h3>
+                        <p id="modal-detail-id" class="text-xs text-slate-500">ID: -</p>
+                    </div>
+                </div>
+                <button onclick="closeDetailModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 text-sm">
+                <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">หมวดหมู่</p>
+                        <p id="modal-detail-cat" class="font-semibold text-slate-700">-</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">ระดับความเร่งด่วน</p>
+                        <p id="modal-detail-priority" class="font-semibold text-slate-700">-</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">ผู้แจ้ง</p>
+                        <p id="modal-detail-reporter" class="font-semibold text-slate-700">-</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">สถานที่</p>
+                        <p id="modal-detail-location" class="font-semibold text-slate-700">-</p>
+                    </div>
+                </div>
+
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 mb-1">อาการเสีย / รายละเอียด</p>
+                    <div id="modal-detail-desc" class="p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-slate-700">
+                        -
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">อัปเดตสถานะ</label>
+                        <select id="modal-update-status" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-600 transition">
+                            <option value="รอดำเนินการ">รอดำเนินการ</option>
+                            <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
+                            <option value="ซ่อมเสร็จสิ้น">ซ่อมเสร็จสิ้น</option>
+                            <option value="ยกเลิก">ยกเลิก</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">มอบหมายช่างผู้รับผิดชอบ</label>
+                        <select id="modal-update-tech" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-600 transition">
+                            <option value="ยังไม่มอบหมาย">-- ยังไม่มอบหมายช่าง --</option>
+                            <option value="ช่างสมชาย (คอมพิวเตอร์)">ช่างสมชาย (คอมพิวเตอร์)</option>
+                            <option value="ช่างวิชัย (แอร์และไฟฟ้า)">ช่างวิชัย (แอร์และไฟฟ้า)</option>
+                            <option value="ช่างประสิทธิ์ (อุปกรณ์ทั่วไป)">ช่างประสิทธิ์ (อุปกรณ์ทั่วไป)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-3 flex space-x-3 border-t border-slate-100">
+                <button type="button" onclick="deleteCurrentTicket()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 font-medium px-4 py-2.5 rounded-xl text-sm transition">ลบรายการ</button>
+                <div class="flex-1 flex space-x-3 justify-end">
+                    <button type="button" onclick="closeDetailModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2.5 rounded-xl text-sm transition">ปิด</button>
+                    <button type="button" onclick="saveTicketChanges()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-5 py-2.5 rounded-xl text-sm transition shadow-sm">บันทึกการแก้ไข</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Mock Data Storage
+        let tickets = [
+            {
+                id: "REP-2026-001",
+                item: "โน้ตบุ๊ก HP ProBook (IT-102)",
+                category: "คอมพิวเตอร์และไอที",
+                priority: "ด่วน",
+                reporter: "กนกวรรณ ศรีสุข",
+                location: "แผนกบัญชี ชั้น 3",
+                description: "เปิดเครื่องไม่ติด หน้าจอดำสนิท คาดว่าแบตเตอรี่เสื่อมหรือชาร์จไฟไม่เข้า",
+                status: "กำลังดำเนินการ",
+                technician: "ช่างสมชาย (คอมพิวเตอร์)",
+                date: "12 พ.ย. 2026, 09:15"
+            },
+            {
+                id: "REP-2026-002",
+                item: "แอร์เคลื่อนที่ 12000 BTU",
+                category: "เครื่องปรับอากาศ",
+                priority: "ปกติ",
+                reporter: "ณรงค์ ปราบพาล",
+                location: "ห้องประชุมย่อย ชั้น 2",
+                description: "แอร์ไม่เย็น มีลมออกปกติแต่ไม่มีความเย็น มีน้ำหยดบริเวณตัวเครื่อง",
+                status: "รอดำเนินการ",
+                technician: "ยังไม่มอบหมาย",
+                date: "12 พ.ย. 2026, 10:30"
+            },
+            {
+                id: "REP-2026-003",
+                item: "เครื่องพิมพ์ Epson L3210",
+                category: "อุปกรณ์สำนักงาน",
+                priority: "ปานกลาง",
+                reporter: "ธ ภัทร",
+                location: "ฝ่ายบุคคล ชั้น 1",
+                description: "กระดาษติดบ่อย และพิมพ์สีเพี้ยนออกเป็นเส้นขาว",
+                status: "ซ่อมเสร็จสิ้น",
+                technician: "ช่างประสิทธิ์ (อุปกรณ์ทั่วไป)",
+                date: "11 พ.ย. 2026, 14:20"
+            },
+            {
+                id: "REP-2026-004",
+                item: "หลอดไฟ LED ยาว (ชุดที่ 4)",
+                category: "ระบบไฟฟ้า/แสงสว่าง",
+                priority: "ปกติ",
+                reporter: "มานพ ใจกล้า",
+                location: "ทางเดินโถงลิฟท์ ชั้น 4",
+                description: "ไฟกระพริบตลอดเวลาและบางดวงดับสนิท",
+                status: "รอดำเนินการ",
+                technician: "ยังไม่มอบหมาย",
+                date: "10 พ.ย. 2026, 16:45"
+            }
+        ];
+
+        const categories = [
+            { name: "คอมพิวเตอร์และไอที", icon: "fa-laptop", count: 12, color: "bg-blue-50 text-blue-600" },
+            { name: "เครื่องปรับอากาศ", icon: "fa-snowflake", count: 5, color: "bg-cyan-50 text-cyan-600" },
+            { name: "อุปกรณ์สำนักงาน", icon: "fa-print", count: 8, color: "bg-amber-50 text-amber-600" },
+            { name: "ระบบไฟฟ้า/แสงสว่าง", icon: "fa-lightbulb", count: 6, color: "bg-yellow-50 text-yellow-600" },
+            { name: "เครือข่าย/อินเทอร์เน็ต", icon: "fa-wifi", count: 4, color: "bg-indigo-50 text-indigo-600" },
+            { name: "อื่นๆ", icon: "fa-box", count: 3, color: "bg-slate-100 text-slate-600" }
+        ];
+
+        const technicians = [
+            { name: "ช่างสมชาย ใจดี", spec: "คอมพิวเตอร์และเครือข่าย", status: "กำลังปฏิบัติงาน", activeTasks: 3, phone: "081-234-5678" },
+            { name: "ช่างวิชัย มั่นคง", spec: "ระบบปรับอากาศและไฟฟ้า", status: "ว่าง", activeTasks: 1, phone: "089-876-5432" },
+            { name: "ช่างประสิทธิ์ ฝีมือดี", spec: "อุปกรณ์สำนักงานและทั่วไป", status: "กำลังปฏิบัติงาน", activeTasks: 2, phone: "086-555-1234" }
+        ];
+
+        let currentActiveTicketId = null;
+
+        // Initialize App on Load
+        window.onload = function() {
+            renderDashboard();
+            renderTicketsList();
+            renderCategories();
+            renderTechnicians();
+        };
+
+        // Tab Navigation Switcher
+        function switchTab(tabId) {
+            const tabs = ['dashboard', 'tickets', 'equipment', 'technicians'];
+            tabs.forEach(t => {
+                const el = document.getElementById(`tab-${t}`);
+                const nav = document.getElementById(`nav-${t}`);
+                const mobNav = document.getElementById(`mob-nav-${t}`);
+                
+                if (t === tabId) {
+                    el.classList.remove('hidden');
+                    if(nav) {
+                        nav.className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-indigo-600 bg-indigo-50";
+                    }
+                    if(mobNav) {
+                        mobNav.className = "flex-1 min-w-[100px] py-2 px-3 text-xs font-medium rounded-xl text-center transition bg-indigo-600 text-white";
+                    }
+                } else {
+                    el.classList.add('hidden');
+                    if(nav) {
+                        nav.className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-600 hover:bg-slate-100 hover:text-slate-900";
+                    }
+                    if(mobNav) {
+                        mobNav.className = "flex-1 min-w-[100px] py-2 px-3 text-xs font-medium rounded-xl text-center transition text-slate-600 hover:bg-slate-100";
+                    }
+                }
+            });
+        }
+
+        // Render Dashboard Stats & Recent Tickets
+        function renderDashboard() {
+            const total = tickets.length;
+            const pending = tickets.filter(t => t.status === 'รอดำเนินการ').length;
+            const progress = tickets.filter(t => t.status === 'กำลังดำเนินการ').length;
+            const resolved = tickets.filter(t => t.status === 'ซ่อมเสร็จสิ้น').length;
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-pending').innerText = pending;
+            document.getElementById('stat-progress').innerText = progress;
+            document.getElementById('stat-resolved').innerText = resolved;
+
+            // Render Recent 4 Tickets
+            const tbody = document.getElementById('recent-tickets-tbody');
+            tbody.innerHTML = '';
+            
+            const recent = [...tickets].slice(0, 5);
+            recent.forEach(ticket => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="py-3 px-4">
+                            <span class="font-semibold text-slate-800">${ticket.id}</span>
+                            <p class="text-xs text-slate-400">${ticket.item}</p>
+                        </td>
+                        <td class="py-3 px-4 text-xs font-medium text-slate-600">${ticket.category}</td>
+                        <td class="py-3 px-4">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold ${getPriorityBadge(ticket.priority)}">
+                                ${ticket.priority}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold ${getStatusBadge(ticket.status)}">
+                                ${ticket.status}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-right">
+                            <button onclick="openDetailModal('${ticket.id}')" class="p-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg text-slate-600 transition">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // Render Category Stats breakdown
+            const catContainer = document.getElementById('category-stats-container');
+            catContainer.innerHTML = '';
+            categories.forEach(cat => {
+                const count = tickets.filter(t => t.category === cat.name).length;
+                catContainer.innerHTML += `
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="font-medium text-slate-600 flex items-center">
+                            <i class="fa-solid ${cat.icon} w-5 text-indigo-500 mr-2"></i> ${cat.name}
+                        </span>
+                        <span class="bg-slate-100 px-2 py-0.5 rounded-full font-semibold text-slate-700">${count} รายการ</span>
+                    </div>
+                `;
+            });
+        }
+
+        // Render Tickets Full List
+        function renderTicketsList(filteredList = null) {
+            const list = filteredList || tickets;
+            const tbody = document.getElementById('all-tickets-tbody');
+            tbody.innerHTML = '';
+
+            if (list.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="py-8 text-center text-slate-400 text-sm">ไม่พบข้อมูลใบแจ้งซ่อมตามเงื่อนไขที่ค้นหา</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            list.forEach(ticket => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="py-3 px-4">
+                            <span class="font-semibold text-slate-800">${ticket.id}</span>
+                            <p class="text-[11px] text-slate-400">${ticket.date}</p>
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="font-semibold text-slate-700">${ticket.item}</span>
+                            <p class="text-[11px] text-slate-400">${ticket.category}</p>
+                        </td>
+                        <td class="py-3 px-4 text-xs text-slate-600 max-w-xs truncate">${ticket.description}</td>
+                        <td class="py-3 px-4">
+                            <span class="text-xs font-medium text-slate-700">${ticket.reporter}</span>
+                            <p class="text-[11px] text-slate-400">${ticket.location}</p>
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold ${getPriorityBadge(ticket.priority)}">
+                                ${ticket.priority}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold ${getStatusBadge(ticket.status)}">
+                                ${ticket.status}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-right">
+                            <button onclick="openDetailModal('${ticket.id}')" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-600 rounded-xl text-xs font-medium transition shadow-sm">
+                                จัดการ
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Filter Tickets by Search & Status
+        function filterTickets() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const statusFilter = document.getElementById('status-filter').value;
+
+            const filtered = tickets.filter(t => {
+                const matchQuery = t.item.toLowerCase().includes(query) || 
+                                   t.reporter.toLowerCase().includes(query) || 
+                                   t.description.toLowerCase().includes(query) || 
+                                   t.id.toLowerCase().includes(query);
+                const matchStatus = statusFilter === 'ALL' || t.status === statusFilter;
+                return matchQuery && matchStatus;
+            });
+
+            renderTicketsList(filtered);
+        }
+
+        // Render Categories Grid
+        function renderCategories() {
+            const grid = document.getElementById('categories-grid');
+            grid.innerHTML = '';
+            categories.forEach(cat => {
+                const count = tickets.filter(t => t.category === cat.name).length;
+                grid.innerHTML += `
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-2xl ${cat.color} flex items-center justify-center text-xl shadow-inner">
+                            <i class="fa-solid ${cat.icon}"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm">${cat.name}</h4>
+                            <p class="text-xs text-slate-500 mt-0.5">แจ้งซ่อมแล้ว <strong>${count}</strong> รายการ</p>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Render Technicians Grid
+        function renderTechnicians() {
+            const grid = document.getElementById('technicians-grid');
+            grid.innerHTML = '';
+            technicians.forEach(tech => {
+                grid.innerHTML += `
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                                ${tech.name.substring(6, 8)}
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold ${tech.status === 'ว่าง' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}">
+                                ${tech.status}
+                            </span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm">${tech.name}</h4>
+                            <p class="text-xs text-slate-500">ความเชี่ยวชาญ: ${tech.spec}</p>
+                        </div>
+                        <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
+                            <span>งานที่ดูแล: <strong>${tech.activeTasks} งาน</strong></span>
+                            <span class="text-indigo-600 font-medium"><i class="fa-solid fa-phone mr-1"></i> ${tech.phone}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Badge Styling Helpers
+        function getPriorityBadge(priority) {
+            switch(priority) {
+                case 'ด่วนที่สุด': return 'bg-rose-100 text-rose-700';
+                case 'ด่วน': return 'bg-amber-100 text-amber-700';
+                case 'ปานกลาง': return 'bg-blue-100 text-blue-700';
+                default: return 'bg-slate-100 text-slate-600';
+            }
+        }
+
+        function getStatusBadge(status) {
+            switch(status) {
+                case 'ซ่อมเสร็จสิ้น': return 'bg-emerald-100 text-emerald-700';
+                case 'กำลังดำเนินการ': return 'bg-blue-100 text-blue-700';
+                case 'รอดำเนินการ': return 'bg-amber-100 text-amber-700';
+                case 'ยกเลิก': return 'bg-rose-100 text-rose-700';
+                default: return 'bg-slate-100 text-slate-600';
+            }
+        }
+
+        // Modal Controls
+        function openNewTicketModal() {
+            document.getElementById('new-ticket-form').reset();
+            document.getElementById('new-ticket-modal').classList.remove('hidden');
+        }
+
+        function closeNewTicketModal() {
+            document.getElementById('new-ticket-modal').classList.add('hidden');
+        }
+
+        function handleCreateTicket(event) {
+            event.preventDefault();
+            const item = document.getElementById('ticket-item').value;
+            const category = document.getElementById('ticket-category').value;
+            const priority = document.getElementById('ticket-priority').value;
+            const reporter = document.getElementById('ticket-reporter').value;
+            const location = document.getElementById('ticket-location').value;
+            const description = document.getElementById('ticket-description').value;
+
+            const newId = `REP-2026-${String(tickets.length + 1).padStart(3, '0')}`;
+            const now = new Date();
+            const dateStr = `${now.getDate()} พ.ย. 2026, ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            const newTicket = {
+                id: newId,
+                item,
+                category,
+                priority,
+                reporter,
+                location,
+                description,
+                status: "รอดำเนินการ",
+                technician: "ยังไม่มอบหมาย",
+                date: dateStr
+            };
+
+            tickets.unshift(newTicket);
+            renderDashboard();
+            renderTicketsList();
+            renderCategories();
+            closeNewTicketModal();
+            showToast(`สร้างใบแจ้งซ่อม ${newId} สำเร็จเรียบร้อย`, 'success');
+        }
+
+        // Ticket Detail Modal
+        function openDetailModal(id) {
+            const ticket = tickets.find(t => t.id === id);
+            if (!ticket) return;
+
+            currentActiveTicketId = id;
+            document.getElementById('modal-detail-id').innerText = `ID: ${ticket.id} (${ticket.date})`;
+            document.getElementById('modal-detail-title').innerText = ticket.item;
+            document.getElementById('modal-detail-cat').innerText = ticket.category;
+            document.getElementById('modal-detail-priority').innerText = ticket.priority;
+            document.getElementById('modal-detail-reporter').innerText = ticket.reporter;
+            document.getElementById('modal-detail-location').innerText = ticket.location;
+            document.getElementById('modal-detail-desc').innerText = ticket.description;
+            document.getElementById('modal-update-status').value = ticket.status;
+            document.getElementById('modal-update-tech').value = ticket.technician;
+
+            document.getElementById('detail-modal').classList.remove('hidden');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detail-modal').classList.add('hidden');
+            currentActiveTicketId = null;
+        }
+
+        function saveTicketChanges() {
+            if (!currentActiveTicketId) return;
+
+            const ticket = tickets.find(t => t.id === currentActiveTicketId);
+            if (ticket) {
+                ticket.status = document.getElementById('modal-update-status').value;
+                ticket.technician = document.getElementById('modal-update-tech').value;
+
+                renderDashboard();
+                renderTicketsList();
+                closeDetailModal();
+                showToast(`อัปเดตข้อมูลใบแจ้งซ่อม ${ticket.id} สำเร็จ`, 'success');
+            }
+        }
+
+        function deleteCurrentTicket() {
+            if (!currentActiveTicketId) return;
+
+            if (confirm(`คุณต้องการลบใบแจ้งซ่อม ${currentActiveTicketId} นี้ใช่หรือไม่?`)) {
+                tickets = tickets.filter(t => t.id !== currentActiveTicketId);
+                renderDashboard();
+                renderTicketsList();
+                renderCategories();
+                closeDetailModal();
+                showToast('ลบใบแจ้งซ่อมออกจากระบบเรียบร้อย', 'info');
+            }
+        }
+
+        // Toast Notification System (Replaces alert)
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bgCol = 'bg-slate-800 text-white';
+            let icon = 'fa-circle-check text-emerald-400';
+            if (type === 'success') {
+                bgCol = 'bg-slate-800 text-white border-l-4 border-emerald-500';
+                icon = 'fa-circle-check text-emerald-400';
+            } else if (type === 'info') {
+                bgCol = 'bg-slate-800 text-white border-l-4 border-indigo-500';
+                icon = 'fa-circle-info text-indigo-400';
+            }
+
+            toast.className = `${bgCol} px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-3 text-xs font-medium transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto`;
+            toast.innerHTML = `
+                <i class="fa-solid ${icon} text-base"></i>
+                <span>${message}</span>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
